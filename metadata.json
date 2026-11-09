@@ -1,0 +1,20 @@
+{
+  "uuid": "adwaita-lock-clock@saifeldin.osama",
+  "name": "Adwaita 24H Lockscreen Clock & Weather",
+  "description": "Replaces the default lock screen clock with a customizable Libadwaita 24H/12H hybrid analog-digital clock, exact live preview across all settings pages, interactive country/city database, weekday strip, system theme/accent color integration, world numeral systems, and regional multi-calendar support. Uses unlock-dialog session mode to render on the lock screen shield, and queries Open-Meteo, ipwho.is, and BigDataCloud APIs.",
+  "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51"
+  ],
+  "session-modes": [
+    "user",
+    "unlock-dialog"
+  ],
+  "settings-schema": "org.gnome.shell.extensions.adwaita-lock-clock",
+  "version": 4
+}
