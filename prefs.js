@@ -958,13 +958,16 @@ export default class AdwaitaLockClockPreferences extends ExtensionPreferences {
             const showGreg = settings.get_boolean('show-gregorian');
             const showSecDate = settings.get_boolean('show-secondary-date');
 
-            const isFahr = settings.get_string('temp-unit') === 'fahrenheit';
+            const ccActive = (settings.get_string('manual-country') || 'EG').toUpperCase();
+            const tempMode = settings.get_string('temp-unit');
+            const isFahr = tempMode === 'fahrenheit' || (tempMode === 'auto' && ['US', 'BS', 'KY', 'LR'].includes(ccActive));
             const tMain = isFahr ? 64 : 18;
             const tMax = isFahr ? 75 : 24;
             const tMin = isFahr ? 61 : 16;
 
-            const windUnitSetting = settings.get_string('wind-unit');
-            const windUnitStr = windUnitSetting === 'ms' ? tr('م/ث', 'm/s') : (windUnitSetting === 'mph' ? tr('ميل/س', 'mph') : tr('كم/س', 'km/h'));
+            const windSetting = settings.get_string('wind-unit');
+            const effWind = (windSetting === 'auto') ? (['US', 'GB', 'LR', 'MM'].includes(ccActive) ? 'mph' : 'kmh') : windSetting;
+            const windUnitStr = effWind === 'ms' ? tr('م/ث', 'm/s') : (effWind === 'mph' ? tr('ميل/س', 'mph') : tr('كم/س', 'km/h'));
 
             const cityStr = settings.get_string('location-mode') === 'manual'
                 ? settings.get_string('manual-city')
@@ -1184,13 +1187,15 @@ export default class AdwaitaLockClockPreferences extends ExtensionPreferences {
         pageWeather.add(grpUnitsLoc);
 
         addModalChoiceRow(grpUnitsLoc, 'temp-unit', tr('وحدة قياس درجة الحرارة', 'Temperature Unit'), '', [
-            { id: 'celsius',    shortAr: 'مئوية (°C)',     shortEn: 'Celsius (°C)',    ar: 'الدرجة المئوية (°C)',     en: 'Celsius (°C)' },
-            { id: 'fahrenheit', shortAr: 'فهرنهايت (°F)', shortEn: 'Fahrenheit (°F)', ar: 'الفهرنهايت (°F)',         en: 'Fahrenheit (°F)' },
+            { id: 'auto',       shortAr: 'تلقائي',         shortEn: 'Auto',            ar: 'تلقائي حسب الدولة (°C / °F)', en: 'Automatic by Country (°C / °F)' },
+            { id: 'celsius',    shortAr: 'مئوية (°C)',     shortEn: 'Celsius (°C)',    ar: 'الدرجة المئوية (°C)',         en: 'Celsius (°C)' },
+            { id: 'fahrenheit', shortAr: 'فهرنهايت (°F)', shortEn: 'Fahrenheit (°F)', ar: 'الفهرنهايت (°F)',             en: 'Fahrenheit (°F)' },
         ]);
         addModalChoiceRow(grpUnitsLoc, 'wind-unit', tr('وحدة سرعة الرياح', 'Wind Speed Unit'), '', [
-            { id: 'kmh', shortAr: 'كم/س',   shortEn: 'km/h', ar: 'كيلومتر في الساعة (كم/س)', en: 'Kilometers per hour (km/h)' },
-            { id: 'ms',  shortAr: 'م/ث',    shortEn: 'm/s',  ar: 'متر في الثانية (م/ث)',      en: 'Meters per second (m/s)' },
-            { id: 'mph', shortAr: 'ميل/س',  shortEn: 'mph',  ar: 'ميل في الساعة (mph)',       en: 'Miles per hour (mph)' },
+            { id: 'auto', shortAr: 'تلقائي', shortEn: 'Auto', ar: 'تلقائي حسب الدولة (كم/س أو ميل/س)', en: 'Automatic by Country (km/h or mph)' },
+            { id: 'kmh',  shortAr: 'كم/س',   shortEn: 'km/h', ar: 'كيلومتر في الساعة (كم/س)',          en: 'Kilometers per hour (km/h)' },
+            { id: 'ms',   shortAr: 'م/ث',    shortEn: 'm/s',  ar: 'متر في الثانية (م/ث)',               en: 'Meters per second (m/s)' },
+            { id: 'mph',  shortAr: 'ميل/س',  shortEn: 'mph',  ar: 'ميل في الساعة (mph)',                en: 'Miles per hour (mph)' },
         ]);
         addModalChoiceRow(grpUnitsLoc, 'location-mode', tr('طريقة تحديد الموقع', 'Location Detection Mode'), tr('تُقفل الخانات اليدوية أدناه في الوضع التلقائي وتُفتح عند اختيار الوضع اليدوي', 'Manual fields below are locked unless Manual mode is selected'), [
             { id: 'auto',   shortAr: 'تلقائي', shortEn: 'Auto',   ar: 'اكتشاف تلقائي عبر الشبكة (Auto IP)', en: 'Automatic Network Detection' },
@@ -1367,8 +1372,33 @@ export default class AdwaitaLockClockPreferences extends ExtensionPreferences {
         syncWeekdaySensitivity();
         settings.connect('changed::show-weekday', syncWeekdaySensitivity);
 
+        addModalChoiceRow(grpDate, 'week-start',
+            tr('أول يوم في شريط الأسبوع', 'First Day of the Week'),
+            tr('يتكيف تلقائياً مع معيار الدولة (السبت للعرب، الأحد لأمريكا، الإثنين لأوروبا) أو يمكنك تحديده يدوياً', 'Auto-adapts to country standard (Sat, Sun, or Mon) or select manually'),
+            [
+                { id: 'auto', shortAr: 'تلقائي',  shortEn: 'Auto',     ar: 'تلقائي حسب الدولة والمنطقة', en: 'Automatic by Country/Region' },
+                { id: 'sat',  shortAr: 'السبت',   shortEn: 'Saturday', ar: 'السبت (Saturday)',            en: 'Saturday' },
+                { id: 'sun',  shortAr: 'الأحد',   shortEn: 'Sunday',   ar: 'الأحد (Sunday)',              en: 'Sunday' },
+                { id: 'mon',  shortAr: 'الإثنين', shortEn: 'Monday',   ar: 'الإثنين (Monday - ISO 8601)', en: 'Monday (ISO 8601)' },
+            ]);
+
         addSwitch(grpDate, 'show-gregorian', tr('إظهار التاريخ الميلادي', 'Show Gregorian Date'), tr('يمكنك تعطيله للإبقاء على التاريخ الهجري / المحلي فقط', 'Disable to show only the Hijri / Local date'));
-        addSwitch(grpDate, 'show-secondary-date', tr('إظهار التاريخ الهجري / المحلي', 'Show Hijri / Local Secondary Date'), tr('يمكنك تعطيله للإبقاء على التاريخ الميلادي فقط', 'Disable to show only the Gregorian date'));
+        addSwitch(grpDate, 'show-secondary-date', tr('إظهار التاريخ الثانوي / المحلي', 'Show Secondary / Regional Date'), tr('يمكنك تعطيله للإبقاء على التاريخ الميلادي فقط', 'Disable to show only the Gregorian date'));
+
+        addModalChoiceRow(grpDate, 'secondary-calendar-type',
+            tr('نظام التقويم الثانوي', 'Secondary Calendar System'),
+            tr('يتعرف تلقائياً على تقويم الدولة أو يتيح لك اختيار أي تقويم عالمي', 'Auto-detects regional calendar or choose any world calendar'),
+            [
+                { id: 'auto',             shortAr: 'تلقائي',       shortEn: 'Auto',       ar: 'تلقائي حسب الدولة والمنطقة',        en: 'Automatic by Region' },
+                { id: 'islamic-umalqura', shortAr: 'هجري',         shortEn: 'Hijri',      ar: 'التقويم الهجري (أم القرى)',         en: 'Islamic Hijri (Umm al-Qura)' },
+                { id: 'persian',          shortAr: 'فارسي',        shortEn: 'Persian',    ar: 'التقويم الفارسي الشمسي (جلالي)',    en: 'Persian Solar Hijri' },
+                { id: 'chinese',          shortAr: 'صيني',         shortEn: 'Chinese',    ar: 'التقويم القمري الصيني',             en: 'Chinese Lunar Calendar' },
+                { id: 'japanese',         shortAr: 'ياباني',       shortEn: 'Japanese',   ar: 'التقويم الياباني الإمبراطوري',      en: 'Japanese Imperial Calendar' },
+                { id: 'buddhist',         shortAr: 'بوذي',         shortEn: 'Buddhist',   ar: 'التقويم البوذي',                    en: 'Buddhist Calendar' },
+                { id: 'indian',           shortAr: 'هندي',         shortEn: 'Indian',     ar: 'التقويم الوطني الهندي (شاكا)',      en: 'Indian National Calendar' },
+                { id: 'ethiopic',         shortAr: 'إثيوبي',       shortEn: 'Ethiopic',   ar: 'التقويم الإثيوبي / القبطي',         en: 'Ethiopic Calendar' },
+                { id: 'isoweek',          shortAr: 'رقم الأسبوع',  shortEn: 'ISO Week',   ar: 'رقم الأسبوع القياسي في السنة (ISO)', en: 'ISO Week Number (Week XX)' },
+            ]);
 
         // Page 4: Appearance & World Numerals
         const pageStyle = new Adw.PreferencesPage({ title: tr('المظهر والأرقام', 'Appearance & Numerals'), icon_name: 'applications-graphics-symbolic' });

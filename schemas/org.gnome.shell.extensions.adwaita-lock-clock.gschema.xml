@@ -82,11 +82,11 @@
       <summary>Numeral System Script Code</summary>
     </key>
     <key name="temp-unit" type="s">
-      <default>'celsius'</default>
+      <default>'auto'</default>
       <summary>Temperature unit: celsius or fahrenheit</summary>
     </key>
     <key name="wind-unit" type="s">
-      <default>'kmh'</default>
+      <default>'auto'</default>
       <summary>Wind speed unit: kmh, ms, or mph</summary>
     </key>
     <key name="ui-scale" type="i">
@@ -127,6 +127,14 @@
     <key name="manual-lon" type="d">
       <default>31.2357</default>
       <summary>Manual Longitude</summary>
+    </key>
+    <key name="week-start" type="s">
+      <default>'auto'</default>
+      <summary>First day of week: auto, sat, sun, or mon</summary>
+    </key>
+    <key name="secondary-calendar-type" type="s">
+      <default>'auto'</default>
+      <summary>Secondary calendar type: auto, islamic-umalqura, persian, chinese, japanese, buddhist, indian, ethiopic, or isoweek</summary>
     </key>
   </schema>
 </schemalist>

@@ -157,7 +157,49 @@ const I18N = {
         warmer: 'joto kuliko jana', cooler: 'baridi kuliko jana', same: 'Sawa na jana',
         clear: 'Shwari', partlyCloudy: 'Mawingu kiasi', cloudy: 'Mawingu', fog: 'Ukungu',
         drizzle: 'Manyunyu', rain: 'Mvua', snow: 'Theluji', storm: 'Dhoruba',
-        kmh: 'km/h', ms: 'm/s', mph: 'mph'
+        kmh: 'km/h', ms: 'm/s', mph: 'mph', weekPrefix: 'Wiki'
+    },
+    de: {
+        humidity: 'Feuchte', wind: 'Wind', feels: 'Gefühlt', uv: 'UV-Index',
+        warmer: 'wärmer als gestern', cooler: 'kühler als gestern', same: 'Wie gestern',
+        clear: 'Klar', partlyCloudy: 'Teilw. bewölkt', cloudy: 'Bewölkt', fog: 'Nebel',
+        drizzle: 'Nieselregen', rain: 'Regen', snow: 'Schnee', storm: 'Gewitter',
+        kmh: 'km/h', ms: 'm/s', mph: 'mph', weekPrefix: 'KW'
+    },
+    ru: {
+        humidity: 'Влажность', wind: 'Ветер', feels: 'Ощущается', uv: 'УФ-индекс',
+        warmer: 'теплее чем вчера', cooler: 'холоднее чем вчера', same: 'Как вчера',
+        clear: 'Ясно', partlyCloudy: 'Перем. облачность', cloudy: 'Облачно', fog: 'Туман',
+        drizzle: 'Морось', rain: 'Дождь', snow: 'Снег', storm: 'Гроза',
+        kmh: 'км/ч', ms: 'м/с', mph: 'миль/ч', weekPrefix: 'Неделя'
+    },
+    zh: {
+        humidity: '湿度', wind: '风速', feels: '体感', uv: '紫外线',
+        warmer: '比昨天暖和', cooler: '比昨天凉爽', same: '与昨天相同',
+        clear: '晴朗', partlyCloudy: '多云', cloudy: '阴天', fog: '雾',
+        drizzle: '毛毛雨', rain: '雨', snow: '雪', storm: '雷暴',
+        kmh: 'km/h', ms: 'm/s', mph: 'mph', weekPrefix: '第', weekSuffix: '周'
+    },
+    ja: {
+        humidity: '湿度', wind: '風速', feels: '体感', uv: 'UV指数',
+        warmer: '昨日より暖かい', cooler: '昨日より涼しい', same: '昨日と同じ',
+        clear: '快晴', partlyCloudy: '晴れ時々曇り', cloudy: '曇り', fog: '霧',
+        drizzle: '霧雨', rain: '雨', snow: '雪', storm: '雷雨',
+        kmh: 'km/h', ms: 'm/s', mph: 'mph', weekPrefix: '第', weekSuffix: '週'
+    },
+    pt: {
+        humidity: 'Humidade', wind: 'Vento', feels: 'Sensação', uv: 'Índice UV',
+        warmer: 'mais quente que ontem', cooler: 'mais fresco que ontem', same: 'Igual a ontem',
+        clear: 'Limpo', partlyCloudy: 'Parc. nublado', cloudy: 'Nublado', fog: 'Nevoeiro',
+        drizzle: 'Chuvisco', rain: 'Chuva', snow: 'Neve', storm: 'Trovoada',
+        kmh: 'km/h', ms: 'm/s', mph: 'mph', weekPrefix: 'Semana'
+    },
+    it: {
+        humidity: 'Umidità', wind: 'Vento', feels: 'Percepita', uv: 'Indice UV',
+        warmer: 'più caldo di ieri', cooler: 'più fresco di ieri', same: 'Come ieri',
+        clear: 'Sereno', partlyCloudy: 'Parz. nuvoloso', cloudy: 'Nuvoloso', fog: 'Nebbia',
+        drizzle: 'Pioggerella', rain: 'Pioggia', snow: 'Neve', storm: 'Temporale',
+        kmh: 'km/h', ms: 'm/s', mph: 'mph', weekPrefix: 'Settimana'
     }
 };
 
@@ -184,8 +226,8 @@ export default class AdwaitaLockClockExtension extends Extension {
         this._interfaceSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
 
         this._cachePath = GLib.build_filenamev([GLib.get_user_cache_dir(), 'adw_lock_clock_state_v10.json']);
-        this._state = this._loadState();
         this._detectSystemLocale();
+        this._state = this._loadState();
 
         this._httpSession = new Soup.Session({ timeout: 10 });
         this._customShell = null;
@@ -306,20 +348,26 @@ export default class AdwaitaLockClockExtension extends Extension {
 
     _detectSystemLocale() {
         const langs = GLib.get_language_names();
-        let raw = 'ar-EG';
+        let raw = 'en-US';
         for (const l of langs) {
             if (l && l !== 'C' && l !== 'POSIX') {
-                raw = l.replace('_', '-').split('.')[0];
-                break;
+                const candidate = l.replace('_', '-').split('.')[0];
+                if (candidate.includes('-')) {
+                    raw = candidate;
+                    break;
+                }
+                if (raw === 'en-US') raw = candidate;
             }
         }
         this._rawLocale = raw;
-        const base = raw.split('-')[0].toLowerCase();
-        this._langCode = I18N[base] ? base : 'ar';
+        const parts = raw.split('-');
+        const base = parts[0].toLowerCase();
+        this._systemCountry = (parts[1] || (base === 'ar' ? 'EG' : 'US')).toUpperCase();
+        this._langCode = I18N[base] ? base : 'en';
     }
 
     _t(key) {
-        const pack = I18N[this._langCode] || I18N.ar;
+        const pack = I18N[this._langCode] || I18N.en;
         return pack[key] || I18N.en[key] || key;
     }
 
@@ -390,10 +438,15 @@ export default class AdwaitaLockClockExtension extends Extension {
     }
 
     _loadState() {
+        let sysTz = 'UTC';
+        try {
+            sysTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+        } catch (e) {}
+        const tzCity = sysTz.includes('/') ? sysTz.split('/').pop().replace(/_/g, ' ') : (this._langCode === 'ar' ? 'القاهرة' : 'London');
         const defaults = {
-            city: 'القاهرة',
-            countryCode: 'EG',
-            timeZone: 'Africa/Cairo',
+            city: (this._langCode === 'ar' && sysTz === 'Africa/Cairo') ? 'القاهرة' : tzCity,
+            countryCode: this._systemCountry || (this._langCode === 'ar' ? 'EG' : 'US'),
+            timeZone: sysTz,
             lat: 30.0444,
             lon: 31.2357,
             weather: {
@@ -1189,25 +1242,37 @@ export default class AdwaitaLockClockExtension extends Extension {
         return this._t('storm');
     }
 
+    _useFahrenheit() {
+        const mode = this._settings ? this._settings.get_string('temp-unit') : 'auto';
+        if (mode === 'fahrenheit') return true;
+        if (mode === 'celsius') return false;
+        const cc = (this._getEffectiveLocation().countryCode || this._systemCountry || 'EG').toUpperCase();
+        return ['US', 'BS', 'KY', 'LR', 'PW', 'FM', 'MH'].includes(cc);
+    }
+
+    _resolveWindUnit() {
+        const mode = this._settings ? this._settings.get_string('wind-unit') : 'auto';
+        if (mode === 'kmh' || mode === 'ms' || mode === 'mph') return mode;
+        const cc = (this._getEffectiveLocation().countryCode || this._systemCountry || 'EG').toUpperCase();
+        if (['US', 'GB', 'LR', 'MM'].includes(cc)) return 'mph';
+        return 'kmh';
+    }
+
     _convertTemp(celsiusVal) {
         const c = Number(celsiusVal) || 0;
-        if (this._settings && this._settings.get_string('temp-unit') === 'fahrenheit') {
-            return Math.round((c * 9) / 5 + 32);
-        }
+        if (this._useFahrenheit()) return Math.round((c * 9) / 5 + 32);
         return Math.round(c);
     }
 
     _convertTempDelta(celsiusDelta) {
         const d = Number(celsiusDelta) || 0;
-        if (this._settings && this._settings.get_string('temp-unit') === 'fahrenheit') {
-            return Math.round((d * 9) / 5);
-        }
+        if (this._useFahrenheit()) return Math.round((d * 9) / 5);
         return Math.round(d);
     }
 
     _convertWind(kmhVal) {
         const k = Number(kmhVal) || 0;
-        const unit = this._settings ? this._settings.get_string('wind-unit') : 'kmh';
+        const unit = this._resolveWindUnit();
         if (unit === 'ms') return { val: Math.round(k / 3.6), unitStr: this._t('ms') };
         if (unit === 'mph') return { val: Math.round(k * 0.621371), unitStr: this._t('mph') };
         return { val: Math.round(k), unitStr: this._t('kmh') };
@@ -1295,13 +1360,49 @@ export default class AdwaitaLockClockExtension extends Extension {
         }
     }
 
+    _getFirstDayOfWeek(cc) {
+        const pref = this._settings ? this._settings.get_string('week-start') : 'auto';
+        if (pref === 'sat') return 6;
+        if (pref === 'sun') return 0;
+        if (pref === 'mon') return 1;
+        const code = (cc || this._systemCountry || 'US').toUpperCase();
+        const satCountries = ['EG', 'DZ', 'BH', 'DJ', 'IQ', 'JO', 'KW', 'LY', 'OM', 'QA', 'SD', 'SY', 'AE', 'YE', 'AF', 'IR', 'PS'];
+        const sunCountries = ['US', 'CA', 'BR', 'MX', 'AR', 'CO', 'CL', 'PE', 'JP', 'KR', 'TW', 'HK', 'PH', 'TH', 'SG', 'IN', 'IL', 'ZA', 'SA', 'AU', 'NZ'];
+        if (satCountries.includes(code)) return 6;
+        if (sunCountries.includes(code)) return 0;
+        return 1;
+    }
+
+    _getIsoWeekNumber(dateObj) {
+        const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
     _resolveSecondaryCalendar(cc) {
-        const code = (cc || 'EG').toUpperCase();
-        if (code === 'IR' || code === 'AF') return { cal: 'persian' };
-        if (code === 'ET' || code === 'ER') return { cal: 'ethiopic' };
-        if (code === 'TH') return { cal: 'buddhist' };
-        if (code === 'IN') return { cal: 'indian' };
-        return { cal: 'islamic-umalqura' };
+        const pref = this._settings ? this._settings.get_string('secondary-calendar-type') : 'auto';
+        if (pref && pref !== 'auto') {
+            if (pref === 'isoweek') return { type: 'isoweek', cal: 'iso8601' };
+            return { type: 'intl', cal: pref };
+        }
+        const code = (cc || this._systemCountry || 'EG').toUpperCase();
+        if (code === 'IR' || code === 'AF') return { type: 'intl', cal: 'persian' };
+        if (code === 'ET' || code === 'ER') return { type: 'intl', cal: 'ethiopic' };
+        if (code === 'TH' || code === 'KH' || code === 'LA') return { type: 'intl', cal: 'buddhist' };
+        if (code === 'IN') return { type: 'intl', cal: 'indian' };
+        if (code === 'CN' || code === 'TW' || code === 'HK' || code === 'SG') return { type: 'intl', cal: 'chinese' };
+        if (code === 'JP') return { type: 'intl', cal: 'japanese' };
+        const islamicCountries = [
+            'EG', 'SA', 'AE', 'KW', 'QA', 'BH', 'OM', 'YE', 'IQ', 'SY', 'JO', 'LB', 'PS',
+            'SD', 'LY', 'TN', 'DZ', 'MA', 'MR', 'SO', 'DJ', 'KM', 'TR', 'PK', 'BD', 'ID',
+            'MY', 'BN', 'MV', 'SN', 'ML', 'NE', 'NG', 'TD', 'GM', 'GN', 'SL', 'AZ', 'UZ', 'KZ', 'TJ', 'TM'
+        ];
+        if (islamicCountries.includes(code) || this._langCode === 'ar' || this._langCode === 'fa' || this._langCode === 'ur') {
+            return { type: 'intl', cal: 'islamic-umalqura' };
+        }
+        return { type: 'isoweek', cal: 'iso8601' };
     }
 
     _updateDateUI() {
@@ -1324,7 +1425,7 @@ export default class AdwaitaLockClockExtension extends Extension {
             this._weekdayStrip.show();
 
             const todayDow = now.getDay();
-            const startDow = this._langCode === 'ar' ? 6 : 0;
+            const startDow = this._getFirstDayOfWeek(cc);
             const nameFmt = this._langCode === 'ar' ? 'long' : 'short';
             const fgMain = isLight ? '#121826' : '#ffffff';
             const fgDim = isLight ? 'rgba(18, 24, 38, 0.56)' : 'rgba(255, 255, 255, 0.58)';
@@ -1376,24 +1477,36 @@ export default class AdwaitaLockClockExtension extends Extension {
 
         const spec = this._resolveSecondaryCalendar(cc);
         let secText = '';
-        try {
-            const rawSec = new Intl.DateTimeFormat(`${this._rawLocale}-u-ca-${spec.cal}-nu-latn`, {
-                timeZone: loc.timeZone || 'Africa/Cairo',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                numberingSystem: 'latn'
-            }).format(now);
-            secText = this._num(rawSec);
-        } catch (e) {
+        if (spec.type === 'isoweek') {
+            const wk = this._num(this._getIsoWeekNumber(now));
+            const pack = I18N[this._langCode] || {};
+            if (pack.weekSuffix) {
+                secText = `${pack.weekPrefix || ''}${wk}${pack.weekSuffix}`;
+            } else {
+                const prefix = pack.weekPrefix || (this._langCode === 'ar' ? 'الأسبوع' : 'Week');
+                secText = `${prefix} ${wk}`;
+            }
+        } else {
             try {
-                const rawSec2 = new Intl.DateTimeFormat(`ar-SA-u-ca-${spec.cal}-nu-latn`, {
+                const rawSec = new Intl.DateTimeFormat(`${this._rawLocale}-u-ca-${spec.cal}-nu-latn`, {
+                    timeZone: loc.timeZone || 'UTC',
                     day: 'numeric',
                     month: 'long',
-                    year: 'numeric'
+                    year: 'numeric',
+                    numberingSystem: 'latn'
                 }).format(now);
-                secText = this._num(rawSec2);
-            } catch (e2) {}
+                secText = this._num(rawSec);
+            } catch (e) {
+                try {
+                    const fallbackLoc = spec.cal.startsWith('islamic') ? 'ar-SA' : 'en-US';
+                    const rawSec2 = new Intl.DateTimeFormat(`${fallbackLoc}-u-ca-${spec.cal}-nu-latn`, {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    }).format(now);
+                    secText = this._num(rawSec2);
+                } catch (e2) {}
+            }
         }
         this._lblSecondaryDate.text = secText;
 
