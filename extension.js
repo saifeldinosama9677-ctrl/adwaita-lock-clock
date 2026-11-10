@@ -626,7 +626,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         }
 
         this._customShell = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             style_class: 'adw-lock-vertical-shell',
             x_align: Clutter.ActorAlign.CENTER,
         });
@@ -644,32 +644,32 @@ export default class AdwaitaLockClockExtension extends Extension {
         this._customShell.add_child(this._clockCanvas);
 
         this._infoRect = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             style_class: 'adw-info-rectangle',
             x_align: Clutter.ActorAlign.CENTER,
         });
 
         this._weatherSection = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             style_class: 'adw-weather-section',
             x_expand: true,
         });
 
         const heroRow = new St.BoxLayout({
-            vertical: false,
+            orientation: Clutter.Orientation.HORIZONTAL,
             style_class: 'adw-weather-hero-row',
             x_expand: true,
         });
 
         const startStack = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             x_expand: true,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.CENTER,
         });
 
         const tempIconRow = new St.BoxLayout({
-            vertical: false,
+            orientation: Clutter.Orientation.HORIZONTAL,
             style_class: 'adw-hero-temp-row',
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.CENTER,
@@ -698,7 +698,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         startStack.add_child(this._lblCityStatusSub);
 
         const endStack = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             x_align: Clutter.ActorAlign.END,
             y_align: Clutter.ActorAlign.CENTER,
         });
@@ -710,7 +710,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         this._forceLtrLabel(this._lblHiLo);
 
         this._yesterdayRow = new St.BoxLayout({
-            vertical: false,
+            orientation: Clutter.Orientation.HORIZONTAL,
             style_class: 'adw-yesterday-row',
             x_align: Clutter.ActorAlign.END,
             y_align: Clutter.ActorAlign.CENTER,
@@ -738,7 +738,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         this._weatherSection.add_child(heroRow);
 
         this._metricsBar = new St.BoxLayout({
-            vertical: false,
+            orientation: Clutter.Orientation.HORIZONTAL,
             style_class: 'adw-metrics-bar',
             x_expand: true,
         });
@@ -748,13 +748,13 @@ export default class AdwaitaLockClockExtension extends Extension {
 
         for (const key of metricKeys) {
             const cluster = new St.BoxLayout({
-                vertical: true,
+                orientation: Clutter.Orientation.VERTICAL,
                 style_class: 'adw-metric-cluster',
                 x_expand: true,
                 x_align: Clutter.ActorAlign.CENTER,
             });
             const valRow = new St.BoxLayout({
-                vertical: false,
+                orientation: Clutter.Orientation.HORIZONTAL,
                 style_class: 'adw-metric-val-row',
                 x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.CENTER,
@@ -797,7 +797,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         this._weatherSection.add_child(this._metricsBar);
 
         this._forecastRow = new St.BoxLayout({
-            vertical: false,
+            orientation: Clutter.Orientation.HORIZONTAL,
             style_class: 'adw-forecast-cards-row',
             x_expand: true,
         });
@@ -805,13 +805,13 @@ export default class AdwaitaLockClockExtension extends Extension {
         this._forecastWidgets = [];
         for (let i = 0; i < 3; i++) {
             const pill = new St.BoxLayout({
-                vertical: true,
+                orientation: Clutter.Orientation.VERTICAL,
                 style_class: 'adw-forecast-pill',
                 x_expand: true,
                 x_align: Clutter.ActorAlign.FILL,
             });
             const head = new St.BoxLayout({
-                vertical: false,
+                orientation: Clutter.Orientation.HORIZONTAL,
                 style_class: 'adw-fc-header',
                 x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.CENTER,
@@ -840,7 +840,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         this._infoRect.add_child(this._sectionDivider);
 
         this._dateSection = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             style_class: 'adw-date-section',
             reactive: true,
             track_hover: true,
@@ -856,7 +856,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         });
 
         this._weekdayStrip = new St.BoxLayout({
-            vertical: false,
+            orientation: Clutter.Orientation.HORIZONTAL,
             style_class: 'adw-weekday-strip',
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
@@ -873,7 +873,7 @@ export default class AdwaitaLockClockExtension extends Extension {
         }
 
         this._calRow = new St.BoxLayout({
-            vertical: false,
+            orientation: Clutter.Orientation.HORIZONTAL,
             style_class: 'adw-date-calendars-row',
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
